@@ -33,6 +33,17 @@ h1 {
   font-size: 1.6rem;
   letter-spacing: 0.02em;
 }
+.home-link {
+   margin: 0 0 0.75rem;
+}
+.home-link a {
+   color: var(--accent);
+   text-decoration: none;
+   font-size: 0.85rem;
+}
+.home-link a:hover {
+   text-decoration: underline;
+}
 
 .blurb {
   margin: 0 0 1rem;
