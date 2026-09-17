@@ -2,6 +2,15 @@
 // Uses a center-out constraint-propagation pass so a localized depth
 // change only ripples toward the nearest edge (smaller delta volume,
 // steadier fused image).
+//
+// Pixels are linked with a small union-find; the classic
+// Thimbleby/Inglis/Witten hidden-surface test skips constraints for
+// surface points one eye can't see. Colors are assigned by sampling the
+// noise ribbon at each pixel's anchor column, so the output never depends
+// on the order pixels are visited in.
+//
+// The noise ribbon can be animated: the base noise may be regenerated at a
+// fixed frequency (NOISE_REGEN_HZ) and textures may drift/pulse over time.
 
 import { CONFIG, effectivePatternWidth } from './config.js';
 
@@ -44,12 +53,17 @@ function valueNoise(x, y, scale, seed) {
   return a + (b - a) * fy;
 }
 
+// Positive modulo for wrapping drifting texture coordinates.
+function wrap(v, m) {
+  return ((v % m) + m) % m;
+}
+
 // Precompute a stable random color pattern (noise ribbon) so the
 // background stays steady frame-to-frame; only depth shifts ripple.
-// Honors CONFIG noise + texture parameters.
-function buildPattern(patternWidth, height) {
+// Honors CONFIG noise + texture parameters. `seed` drives the base noise,
+// `time` (seconds) drives texture drift / pulse when ANIMATE is on.
+function buildPattern(patternWidth, height, seed, time) {
   const pattern = new Uint8Array(patternWidth * height * 3);
-  const seed = CONFIG.NOISE_SEED || 1;
   const rng = makeRng(seed);
   const contrast = CONFIG.NOISE_CONTRAST;
   const mode = CONFIG.NOISE_MODE;
@@ -57,7 +71,18 @@ function buildPattern(patternWidth, height) {
 
   const texture = CONFIG.NOISE_TEXTURE || 'none';
   const texScale = Math.max(1, CONFIG.NOISE_TEXTURE_SCALE || 16);
-  const texStrength = Math.max(0, Math.min(1, CONFIG.NOISE_TEXTURE_STRENGTH ?? 0));
+  let texStrength = Math.max(0, Math.min(1, CONFIG.NOISE_TEXTURE_STRENGTH ?? 0));
+  // Plasma uses the base seed (not the regen-bumped one) so the texture
+  // field stays put while the noise underneath regenerates.
+  const texSeed = CONFIG.NOISE_SEED || 1;
+
+  // Time-based texture animation.
+  const animate = !!CONFIG.ANIMATE;
+  const t = animate ? time || 0 : 0;
+  const offX = animate ? (CONFIG.TEXTURE_DRIFT_X || 0) * t : 0;
+  const offY = animate ? (CONFIG.TEXTURE_DRIFT_Y || 0) * t : 0;
+  const pulse = animate ? CONFIG.TEXTURE_PULSE_HZ || 0 : 0;
+  if (pulse > 0) texStrength *= 0.5 + 0.5 * Math.sin(2 * Math.PI * pulse * t);
 
   // Scale a raw 0..1 value around mid-gray by contrast.
   const scale = (v) => {
@@ -67,23 +92,26 @@ function buildPattern(patternWidth, height) {
 
   // Texture field at (x, y) -> 0..1, or null when texture is 'none'.
   const texAt = (x, y) => {
+    const tx = x + offX;
+    const ty = y + offY;
     switch (texture) {
       case 'stripes':
-        return 0.5 + 0.5 * Math.sin((x / texScale) * Math.PI * 2);
+        return 0.5 + 0.5 * Math.sin((tx / texScale) * Math.PI * 2);
       case 'checker': {
-        const cx = Math.floor(x / texScale);
-        const cy = Math.floor(y / texScale);
+        const cx = Math.floor(tx / texScale);
+        const cy = Math.floor(ty / texScale);
         return (cx + cy) & 1 ? 1 : 0;
       }
       case 'dots': {
-        const cx = (x % texScale) - texScale / 2;
-        const cy = (y % texScale) - texScale / 2;
+        const cx = wrap(tx, texScale) - texScale / 2;
+        const cy = wrap(ty, texScale) - texScale / 2;
         const r = Math.sqrt(cx * cx + cy * cy) / (texScale / 2);
         return r < 0.5 ? 1 : 0;
       }
       case 'plasma': {
         const n =
-          0.5 * valueNoise(x, y, texScale, seed) + 0.5 * valueNoise(x, y, texScale * 2, seed + 101);
+          0.5 * valueNoise(tx, ty, texScale, texSeed) +
+          0.5 * valueNoise(tx, ty, texScale * 2, texSeed + 101);
         return Math.max(0, Math.min(1, n));
       }
       default:
@@ -93,9 +121,9 @@ function buildPattern(patternWidth, height) {
 
   // Blend a base 0..1 sample with the texture field.
   const blend = (base, x, y) => {
-    const t = texAt(x, y);
-    if (t === null) return base;
-    return base * (1 - texStrength) + t * texStrength;
+    const tv = texAt(x, y);
+    if (tv === null) return base;
+    return base * (1 - texStrength) + tv * texStrength;
   };
 
   for (let y = 0; y < height; y++) {
@@ -128,11 +156,24 @@ export class Stereogram {
   constructor(width, height) {
     this.width = width;
     this.height = height;
+    // Animation state.
+    this.seedOffset = 0; // bumped on each timed noise regeneration
+    this.texTime = 0; // seconds; drives texture drift / pulse
+    this.lastRegenMs = 0;
+
     this.patternWidth = effectivePatternWidth();
-    this.pattern = buildPattern(this.patternWidth, height);
+    this.pattern = this._build();
     this.imageData = new ImageData(width, height);
     // Scratch buffers reused each frame.
     this.same = new Int32Array(width);
+  }
+
+  _seed() {
+    return (CONFIG.NOISE_SEED || 1) + this.seedOffset;
+  }
+
+  _build() {
+    return buildPattern(this.patternWidth, this.height, this._seed(), this.texTime);
   }
 
   // Resize the render target (changes resolution, reallocates buffers).
@@ -147,7 +188,33 @@ export class Stereogram {
   // Rebuild the noise ribbon (call when noise or pattern params change).
   rebuildPattern() {
     this.patternWidth = effectivePatternWidth();
-    this.pattern = buildPattern(this.patternWidth, this.height);
+    this.pattern = this._build();
+  }
+
+  // Advance ribbon animation. Returns true if the ribbon changed and the
+  // stereogram needs re-rendering.
+  update(nowMs) {
+    if (!CONFIG.ANIMATE) return false;
+    let rebuild = false;
+
+    const hz = CONFIG.NOISE_REGEN_HZ || 0;
+    if (hz > 0 && nowMs - this.lastRegenMs >= 1000 / hz) {
+      this.lastRegenMs = nowMs;
+      this.seedOffset++;
+      rebuild = true;
+    }
+
+    const textured = (CONFIG.NOISE_TEXTURE || 'none') !== 'none';
+    const moving =
+      textured &&
+      (CONFIG.TEXTURE_DRIFT_X || CONFIG.TEXTURE_DRIFT_Y || CONFIG.TEXTURE_PULSE_HZ);
+    if (moving) {
+      this.texTime = nowMs / 1000;
+      rebuild = true;
+    }
+
+    if (rebuild) this.rebuildPattern();
+    return rebuild;
   }
 
   // Separation (in px) between the two eye-images for a given depth z (0..1).
@@ -157,20 +224,61 @@ export class Stereogram {
     return Math.round(((1 - mu * z) * E) / (2 - mu * z));
   }
 
-  // Link two pixels (union) so they share a color anchor.
-  _link(same, a, b) {
-    if (a === b) return;
-    same[a] = b;
-  }
-
   renderStereogram(ctx, depthBuffer) {
     const { width, height, same, pattern } = this;
     const patternWidth = this.patternWidth;
     const data = this.imageData.data;
     const center = width >> 1;
+    const E = CONFIG.EYE_SEPARATION_PX;
+    const mu = CONFIG.MU;
+
+    // Follow link chains to the representative anchor, compressing the
+    // path so repeated lookups are cheap.
+    const find = (x) => {
+      let r = x;
+      while (same[r] !== r) r = same[r];
+      let c = x;
+      while (same[c] !== r) {
+        const next = same[c];
+        same[c] = r;
+        c = next;
+      }
+      return r;
+    };
+
+    // Union two pixels' anchor sets (root-to-root, so no cycles and no
+    // constraint is ever silently overwritten). The surviving anchor is
+    // the one nearer the center column, keeping the seam stable around
+    // the middle of the image.
+    const link = (a, b, keepHigher) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra === rb) return;
+      if (keepHigher ? ra < rb : ra > rb) same[ra] = rb;
+      else same[rb] = ra;
+    };
+
+    // Hidden-surface test (Thimbleby/Inglis/Witten): only constrain a
+    // surface point if neither eye's line of sight is blocked by a
+    // nearer point. Without it, background pixels just behind a raised
+    // edge get tied to foreground pixels and ghost.
+    const visible = (rowOff, x, z) => {
+      let t = 1;
+      let zt;
+      do {
+        zt = z + (2 * (2 - mu * z) * t) / (mu * E);
+        const xl = x - t;
+        const xr = x + t;
+        if (xl >= 0 && depthBuffer[rowOff + xl] >= zt) return false;
+        if (xr < width && depthBuffer[rowOff + xr] >= zt) return false;
+        t++;
+      } while (zt < 1);
+      return true;
+    };
 
     for (let y = 0; y < height; y++) {
       const rowOff = y * width;
+      const rowPat = y * patternWidth;
 
       // Each pixel initially links to itself.
       for (let x = 0; x < width; x++) same[x] = x;
@@ -186,10 +294,8 @@ export class Stereogram {
           const sep = this._separation(z);
           const left = xr - (sep >> 1);
           const right = left + sep;
-          if (left >= 0 && right < width) {
-            // Anchor to the pixel nearer the center to keep the seam
-            // stable around the middle of the image.
-            this._link(same, right, left);
+          if (left >= 0 && right < width && visible(rowOff, xr, z)) {
+            link(left, right, false);
           }
         }
         // Leftward half.
@@ -199,44 +305,26 @@ export class Stereogram {
           const sep = this._separation(z);
           const left = xl - (sep >> 1);
           const right = left + sep;
-          if (left >= 0 && right < width) {
-            this._link(same, left, right);
+          if (left >= 0 && right < width && visible(rowOff, xl, z)) {
+            link(left, right, true);
           }
         }
       }
 
-      // Resolve link chains to a representative anchor per pixel.
-      const resolve = (x) => {
-        let r = x;
-        while (same[r] !== r) r = same[r];
-        // Path compression.
-        let c = x;
-        while (same[c] !== r) {
-          const next = same[c];
-          same[c] = r;
-          c = next;
-        }
-        return r;
-      };
-
-      // Assign colors. Anchors sample the stable pattern; linked pixels
-      // copy their anchor's color.
+      // Assign colors: every pixel takes the ribbon color at its anchor's
+      // column. Sampling the ribbon directly (instead of copying from the
+      // output buffer) makes the result independent of visiting order.
+      // Previously, left-half pixels copied from anchors to their right
+      // that hadn't been written yet this frame and picked up stale
+      // colors from the previous render.
       for (let x = 0; x < width; x++) {
-        const anchor = resolve(x);
+        const anchor = find(x);
+        const p = ((anchor % patternWidth) + rowPat) * 3;
         const idx = (rowOff + x) * 4;
-        if (anchor === x) {
-          const p = ((x % patternWidth) + y * patternWidth) * 3;
-          data[idx] = pattern[p];
-          data[idx + 1] = pattern[p + 1];
-          data[idx + 2] = pattern[p + 2];
-          data[idx + 3] = 255;
-        } else {
-          const src = (rowOff + anchor) * 4;
-          data[idx] = data[src];
-          data[idx + 1] = data[src + 1];
-          data[idx + 2] = data[src + 2];
-          data[idx + 3] = 255;
-        }
+        data[idx] = pattern[p];
+        data[idx + 1] = pattern[p + 1];
+        data[idx + 2] = pattern[p + 2];
+        data[idx + 3] = 255;
       }
     }
 

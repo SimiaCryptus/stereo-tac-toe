@@ -3,30 +3,46 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stereo-Tac-Toe</title>
+    <title>Stereo Games</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main>
-     <p class="home-link"><a href="/">&larr; Home</a></p>
-      <h1>Stereo-Tac-Toe</h1>
-      <p class="blurb">
-        A hidden Magic Eye tic-tac-toe board. Relax your eyes and let the image fuse — the grid,
-        cursor, and marks float out of the noise at different depths. Click a cell to play. Press
-        <kbd>D</kbd> to peek at the raw depth map.
-      </p>
+      <div class="topbar">
+        <a class="home-link" href="/" title="Home">&larr;</a>
+        <strong class="title">Stereo Games</strong>
 
-      <canvas id="game" width="640" height="480"></canvas>
+        <div class="menu">
+          <button type="button" class="menu-btn" id="appearance-btn" aria-expanded="false">
+            Appearance ▾
+          </button>
+          <div class="menu-panel" id="appearance-panel" hidden></div>
+        </div>
 
-      <div class="controls">
-        <label>
+        <div class="menu">
+          <button type="button" class="menu-btn" id="game-btn" aria-expanded="false">
+            Game ▾
+          </button>
+          <div class="menu-panel menu-panel--narrow" id="game-panel" hidden>
+            <label class="knob">
+              <span class="knob-label">Mode</span>
+              <select id="mode"></select>
+            </label>
+            <p class="blurb" id="blurb"></p>
+            <div id="game-settings"></div>
+          </div>
+        </div>
+
+        <label class="chk">
           <input type="checkbox" id="diagnostics" />
-          Diagnostics (raw depth map)
+          Depth
         </label>
         <button id="reset">New Game</button>
-        <span id="status" class="status">X to move</span>
+        <span class="hint"><kbd>D</kbd> depth · <kbd>R</kbd> restart</span>
+        <span id="status" class="status"></span>
       </div>
-      <div id="panel" class="panel-container"></div>
+
+      <canvas id="game"></canvas>
     </main>
 
     <script type="module" src="src/main.js"></script>

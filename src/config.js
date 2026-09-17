@@ -25,6 +25,13 @@ export const DEFAULTS = Object.freeze({
   NOISE_TEXTURE_STRENGTH: 0.6, // 0..1 blend of texture over base noise
   // When true, PATTERN_WIDTH is derived from eye separation & depth.
   AUTO_PATTERN_WIDTH: true,
+  // Animation. ANIMATE gates every time-based change to the ribbon.
+  ANIMATE: true,
+  NOISE_REGEN_HZ: 0, // times per second the base noise is regenerated (0 = never)
+  TEXTURE_DRIFT_X: 0, // texture scroll speed in px/s
+  TEXTURE_DRIFT_Y: 0,
+  TEXTURE_PULSE_HZ: 0, // oscillate texture strength (0 = steady)
+
 
   // Named depth levels (0 = far background, 1 = near foreground).
   // These are derived from a base + contrast so they can be scaled live.
@@ -40,6 +47,13 @@ export const DEFAULTS = Object.freeze({
   LINE_THICKNESS: 6, // grid line thickness in px
   MARK_THICKNESS: 10, // stroke thickness for X / O
   MARK_INSET: 22, // inset of a mark from its cell edge
+  // Game-mode tuning.
+  MEMORY_REVEAL_SEC: 5, // how long memory shapes stay visible
+  OUTLIER_DIFFICULTY: 2, // 1 (obvious) .. 5 (subtle)
+  MAZE_SIZE: 9, // maze cells per side (applied on New Game)
+  PONG_SPEED: 220, // initial ball speed, px/s
+   WORDSEARCH_SIZE: 6, // word-search letters per side (applied on New Game)
+   AUTO_MOVE_SEC: 1.2, // seconds between moves in 0-player tic-tac-toe
 });
 
 // Live, mutable config. Start as a shallow copy of DEFAULTS.

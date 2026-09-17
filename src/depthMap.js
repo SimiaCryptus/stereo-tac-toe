@@ -1,5 +1,7 @@
-// Rasterizes game state into a Float32Array depth buffer.
+// Rasterizes into a Float32Array depth buffer.
 // Depth values: 0 = far background, 1 = near foreground.
+// Exposes the software rasterization primitives so game modes can draw
+// their own depth scenes, plus the tic-tac-toe compositor.
 
 import { CONFIG, boardGeometry } from './config.js';
 
@@ -9,7 +11,7 @@ export function createDepthMap(width, height) {
 
 // --- Software rasterization helpers (write depth, not color) ---
 
-function fillRect(buf, w, h, x0, y0, x1, y1, depth) {
+export function fillRect(buf, w, h, x0, y0, x1, y1, depth) {
   const xa = Math.max(0, Math.floor(Math.min(x0, x1)));
   const xb = Math.min(w, Math.ceil(Math.max(x0, x1)));
   const ya = Math.max(0, Math.floor(Math.min(y0, y1)));
@@ -23,7 +25,7 @@ function fillRect(buf, w, h, x0, y0, x1, y1, depth) {
 }
 
 // Thick line via distance-to-segment test.
-function drawLine(buf, w, h, x0, y0, x1, y1, thickness, depth) {
+export function drawLine(buf, w, h, x0, y0, x1, y1, thickness, depth) {
   const half = thickness / 2;
   const minX = Math.max(0, Math.floor(Math.min(x0, x1) - half));
   const maxX = Math.min(w, Math.ceil(Math.max(x0, x1) + half));
@@ -50,9 +52,9 @@ function drawLine(buf, w, h, x0, y0, x1, y1, thickness, depth) {
 }
 
 // Ring (annulus) for drawing an O.
-function drawRing(buf, w, h, cx, cy, radius, thickness, depth) {
+export function drawRing(buf, w, h, cx, cy, radius, thickness, depth) {
   const outer = radius + thickness / 2;
-  const inner = radius - thickness / 2;
+  const inner = Math.max(0, radius - thickness / 2);
   const outerSq = outer * outer;
   const innerSq = inner * inner;
   const minX = Math.max(0, Math.floor(cx - outer));
@@ -72,7 +74,64 @@ function drawRing(buf, w, h, cx, cy, radius, thickness, depth) {
   }
 }
 
-// --- Composite full game state into the buffer ---
+// Filled disc.
+export function fillCircle(buf, w, h, cx, cy, radius, depth) {
+  const rSq = radius * radius;
+  const minX = Math.max(0, Math.floor(cx - radius));
+  const maxX = Math.min(w, Math.ceil(cx + radius));
+  const minY = Math.max(0, Math.floor(cy - radius));
+  const maxY = Math.min(h, Math.ceil(cy + radius));
+  for (let y = minY; y < maxY; y++) {
+    const row = y * w;
+    for (let x = minX; x < maxX; x++) {
+      const ddx = x - cx;
+      const ddy = y - cy;
+      if (ddx * ddx + ddy * ddy <= rSq) {
+        buf[row + x] = depth;
+      }
+    }
+  }
+}
+
+// Filled convex polygon. pts: [[x, y], ...] in either winding order.
+export function fillConvexPolygon(buf, w, h, pts, depth) {
+  const n = pts.length;
+  if (n < 3) return;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  let area = 0;
+  for (let i = 0; i < n; i++) {
+    const [x0, y0] = pts[i];
+    const [x1, y1] = pts[(i + 1) % n];
+    minX = Math.min(minX, x0);
+    maxX = Math.max(maxX, x0);
+    minY = Math.min(minY, y0);
+    maxY = Math.max(maxY, y0);
+    area += x0 * y1 - x1 * y0;
+  }
+  const sign = area >= 0 ? 1 : -1;
+  const xa = Math.max(0, Math.floor(minX));
+  const xb = Math.min(w, Math.ceil(maxX) + 1);
+  const ya = Math.max(0, Math.floor(minY));
+  const yb = Math.min(h, Math.ceil(maxY) + 1);
+  for (let y = ya; y < yb; y++) {
+    const row = y * w;
+    for (let x = xa; x < xb; x++) {
+      let inside = true;
+      for (let i = 0; i < n && inside; i++) {
+        const [x0, y0] = pts[i];
+        const [x1, y1] = pts[(i + 1) % n];
+        const e = (x1 - x0) * (y - y0) - (y1 - y0) * (x - x0);
+        if (e * sign < 0) inside = false;
+      }
+      if (inside) buf[row + x] = depth;
+    }
+  }
+}
+
+// --- Composite full tic-tac-toe game state into the buffer ---
 
 export function renderDepthMap(buffer, game) {
   const { WIDTH, HEIGHT, DEPTH_LEVELS, LINE_THICKNESS, MARK_THICKNESS, MARK_INSET } = CONFIG;

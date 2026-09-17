@@ -1,11 +1,13 @@
-// Builds the "knobs galore" control panel and wires it to live CONFIG.
+// Builds the two settings menus and wires them to live CONFIG:
+//   * Appearance — stereogram, noise, depth, drawing, animation, resolution
+//   * Game       — only the knobs that belong to the active mode
 // Also handles the fullscreen button and drag-to-resize handle.
 
-import { CONFIG, DEFAULTS, resetConfig, effectivePatternWidth } from './config.js';
+import { CONFIG, resetConfig, effectivePatternWidth } from './config.js';
 
-// Declarative spec for every control. `pattern: true` controls trigger a
-// stereogram noise-ribbon rebuild; all controls trigger a redraw.
-const CONTROLS = [
+// Declarative spec for appearance controls. `pattern: true` controls
+// trigger a stereogram noise-ribbon rebuild; all controls trigger a redraw.
+const APPEARANCE = [
   {
     group: 'Stereogram',
     items: [
@@ -56,40 +58,6 @@ const CONTROLS = [
     ],
   },
   {
-    group: 'Texture',
-    items: [
-      {
-        key: 'NOISE_TEXTURE',
-        label: 'Ribbon texture',
-        type: 'select',
-        pattern: true,
-        options: [
-          ['none', 'None'],
-          ['stripes', 'Stripes'],
-          ['checker', 'Checker'],
-          ['dots', 'Dots'],
-          ['plasma', 'Plasma'],
-        ],
-      },
-      {
-        key: 'NOISE_TEXTURE_SCALE',
-        label: 'Texture scale',
-        min: 2,
-        max: 64,
-        step: 1,
-        pattern: true,
-      },
-      {
-        key: 'NOISE_TEXTURE_STRENGTH',
-        label: 'Texture strength',
-        min: 0,
-        max: 1,
-        step: 0.01,
-        pattern: true,
-      },
-    ],
-  },
-  {
     group: 'Depth',
     items: [
       { key: 'DEPTH_CONTRAST', label: 'Depth contrast', min: 0.2, max: 1, step: 0.01 },
@@ -107,29 +75,73 @@ const CONTROLS = [
       { key: 'MARK_INSET', label: 'Mark inset', min: 0, max: 60, step: 1 },
     ],
   },
+  {
+    group: 'Animation',
+    items: [
+      { key: 'ANIMATE', label: 'Animate ribbon', type: 'checkbox', pattern: true },
+      { key: 'NOISE_REGEN_HZ', label: 'Noise regen (Hz)', min: 0, max: 30, step: 0.5 },
+    ],
+  },
 ];
 
+// Per-mode game settings, keyed by mode id.
+const GAME_SETTINGS = {
+  tictactoe: [],
+  tictactoe0: [{ key: 'AUTO_MOVE_SEC', label: 'Move delay (s)', min: 0.2, max: 5, step: 0.1 }],
+  memory: [{ key: 'MEMORY_REVEAL_SEC', label: 'Reveal time (s)', min: 1, max: 20, step: 0.5 }],
+  outlier: [{ key: 'OUTLIER_DIFFICULTY', label: 'Difficulty', min: 1, max: 5, step: 1 }],
+  maze: [{ key: 'MAZE_SIZE', label: 'Maze size (New Game)', min: 4, max: 25, step: 1 }],
+  pong: [{ key: 'PONG_SPEED', label: 'Ball speed', min: 60, max: 600, step: 10 }],
+  wordsearch: [
+    { key: 'WORDSEARCH_SIZE', label: 'Grid size (New Game)', min: 5, max: 10, step: 1 },
+  ],
+};
+
 export class Controls {
+  // appearanceEl: container for the appearance menu contents.
+  // gameEl: container for the active mode's settings.
   // onRedraw(): mark dirty. onPatternChange(): rebuild noise ribbon.
   // onResize(w,h): change canvas resolution. getSize(): current {w,h}.
-  constructor(container, { onRedraw, onPatternChange, onResize, getSize, canvas }) {
-    this.container = container;
+  constructor({ appearanceEl, gameEl, onRedraw, onPatternChange, onResize, getSize, canvas }) {
+    this.appearanceEl = appearanceEl;
+    this.gameEl = gameEl;
     this.onRedraw = onRedraw;
     this.onPatternChange = onPatternChange;
     this.onResize = onResize;
     this.getSize = getSize;
     this.canvas = canvas;
     this.inputs = new Map();
-    this._build();
+    this.gameKeys = [];
+    this._buildAppearance();
     this._buildResizeHandle();
     this._reflectAutoPattern();
   }
 
-  _build() {
+  // Rebuild the game menu so it only shows the active mode's knobs.
+  setMode(id) {
+    for (const key of this.gameKeys) this.inputs.delete(key);
+    this.gameKeys = [];
+    this.gameEl.textContent = '';
+
+    const items = GAME_SETTINGS[id] || [];
+    if (!items.length) {
+      const note = document.createElement('p');
+      note.className = 'menu-note';
+      note.textContent = 'This mode has no settings.';
+      this.gameEl.appendChild(note);
+      return;
+    }
+    for (const item of items) {
+      this.gameEl.appendChild(this._buildItem(item));
+      this.gameKeys.push(item.key);
+    }
+  }
+
+  _buildAppearance() {
     const panel = document.createElement('div');
     panel.className = 'panel';
 
-    for (const { group, items } of CONTROLS) {
+    for (const { group, items } of APPEARANCE) {
       const section = document.createElement('fieldset');
       section.className = 'knob-group';
       const legend = document.createElement('legend');
@@ -175,7 +187,7 @@ export class Controls {
     actions.appendChild(fullscreen);
     panel.appendChild(actions);
 
-    this.container.appendChild(panel);
+    this.appearanceEl.appendChild(panel);
   }
 
   _buildResolutionRow() {

@@ -1,6 +1,6 @@
 // Pure tic-tac-toe state machine. Emits no DOM.
 
-const WIN_LINES = [
+export const WIN_LINES = [
   [0, 1, 2],
   [3, 4, 5],
   [6, 7, 8], // rows
