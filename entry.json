@@ -8,5 +8,6 @@
   "href": "index.html",
   "readme": "README.md",
   "launchLabel": "Open Stereo Arcade",
+  "video": "/videos/demo_stereo_arcade.mp4",
   "pitch": "A fully playable game collection of classic arcade games, including Tic-Tac-Toe, Pong, and others, embedded in an autostereogram"
 }
