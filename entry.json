@@ -1,13 +1,13 @@
 {
-  "id": "stereo-arcade",
-  "category": "game",
-  "section": "games",
-  "order": 3,
-  "icon": "ST",
-  "title": "Stereo Arcade",
-  "href": "index.html",
-  "readme": "README.md",
-  "launchLabel": "Open Stereo Arcade",
-  "video": "/videos/demo_stereo_arcade.mp4",
-  "pitch": "A fully playable game collection of classic arcade games, including Tic-Tac-Toe, Pong, and others, embedded in an autostereogram"
+    "id": "stereo-arcade",
+    "title": "Stereo Arcade",
+    "category": "game",
+    "href": "index.html",
+    "readme": "README.md",
+    "video": "/videos/demo_stereo_arcade.mp4",
+    "order": 11,
+    "section": "games",
+    "icon": "ST",
+    "launchLabel": "Open Stereo Arcade",
+    "pitch": "A fully playable game collection of classic arcade games, including Tic-Tac-Toe, Pong, and others, embedded in an autostereogram"
 }
