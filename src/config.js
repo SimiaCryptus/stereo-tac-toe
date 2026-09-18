@@ -32,7 +32,6 @@ export const DEFAULTS = Object.freeze({
   TEXTURE_DRIFT_Y: 0,
   TEXTURE_PULSE_HZ: 0, // oscillate texture strength (0 = steady)
 
-
   // Named depth levels (0 = far background, 1 = near foreground).
   // These are derived from a base + contrast so they can be scaled live.
   DEPTH_BACKGROUND: 0.0,
@@ -52,8 +51,8 @@ export const DEFAULTS = Object.freeze({
   OUTLIER_DIFFICULTY: 2, // 1 (obvious) .. 5 (subtle)
   MAZE_SIZE: 9, // maze cells per side (applied on New Game)
   PONG_SPEED: 220, // initial ball speed, px/s
-   WORDSEARCH_SIZE: 6, // word-search letters per side (applied on New Game)
-   AUTO_MOVE_SEC: 1.2, // seconds between moves in 0-player tic-tac-toe
+  WORDSEARCH_SIZE: 6, // word-search letters per side (applied on New Game)
+  AUTO_MOVE_SEC: 1.2, // seconds between moves in 0-player tic-tac-toe
 });
 
 // Live, mutable config. Start as a shallow copy of DEFAULTS.

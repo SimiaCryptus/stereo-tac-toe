@@ -130,7 +130,10 @@ setMode(location.hash.slice(1) || MODES[0].id);
 // --- Dropdown menus ---
 
 const menus = [
-  { btn: document.getElementById('appearance-btn'), panel: document.getElementById('appearance-panel') },
+  {
+    btn: document.getElementById('appearance-btn'),
+    panel: document.getElementById('appearance-panel'),
+  },
   { btn: document.getElementById('game-btn'), panel: document.getElementById('game-panel') },
 ];
 

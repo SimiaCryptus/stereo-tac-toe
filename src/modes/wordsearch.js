@@ -12,10 +12,34 @@ import { drawGlyph, GLYPH_H } from '../font.js';
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const WORD_BANK = [
-  'CAT', 'DOG', 'SUN', 'EYE', 'SKY', 'DOT',
-  'MOON', 'STAR', 'TREE', 'FISH', 'BIRD', 'LAMP', 'BOOK', 'SHIP', 'ROAD',
-  'FUSE', 'GRID', 'MARK', 'RING', 'MAZE', 'PONG', 'GAME', 'BLUR',
-  'MAGIC', 'DEPTH', 'NOISE', 'PIXEL', 'FOCUS',
+  'CAT',
+  'DOG',
+  'SUN',
+  'EYE',
+  'SKY',
+  'DOT',
+  'MOON',
+  'STAR',
+  'TREE',
+  'FISH',
+  'BIRD',
+  'LAMP',
+  'BOOK',
+  'SHIP',
+  'ROAD',
+  'FUSE',
+  'GRID',
+  'MARK',
+  'RING',
+  'MAZE',
+  'PONG',
+  'GAME',
+  'BLUR',
+  'MAGIC',
+  'DEPTH',
+  'NOISE',
+  'PIXEL',
+  'FOCUS',
 ];
 
 // Forward-reading directions only (E, S, SE, NE) — reversed words are
@@ -159,9 +183,7 @@ export class WordSearchMode extends Mode {
     }
     const s = cells.map((i) => this.grid[i]).join('');
     const rev = s.split('').reverse().join('');
-    const hit = this.words.find(
-      (w) => !this.found.has(w.word) && (w.word === s || w.word === rev)
-    );
+    const hit = this.words.find((w) => !this.found.has(w.word) && (w.word === s || w.word === rev));
     if (hit) {
       this.found.add(hit.word);
       this._say(`Found ${hit.word}!`);
@@ -245,7 +267,10 @@ export class WordSearchMode extends Mode {
 
     buf.fill(D.BACKGROUND);
 
-    const center = (i) => [ox + (i % n) * cell + cell / 2, oy + Math.floor(i / n) * cell + cell / 2];
+    const center = (i) => [
+      ox + (i % n) * cell + cell / 2,
+      oy + Math.floor(i / n) * cell + cell / 2,
+    ];
 
     // Found words: a stripe beneath the letters at grid depth.
     for (const wd of this.words) {

@@ -41,7 +41,10 @@ export class OutlierMode extends Mode {
     const sign = Math.random() < 0.5 ? -1 : 1;
 
     if (this.kind === 'shape') {
-      const pool = diff >= 3 && SIMILAR[this.base] ? SIMILAR[this.base] : SHAPES.filter((s) => s !== this.base);
+      const pool =
+        diff >= 3 && SIMILAR[this.base]
+          ? SIMILAR[this.base]
+          : SHAPES.filter((s) => s !== this.base);
       this.outlier.shape = pool[randInt(pool.length)];
     } else if (this.kind === 'size') {
       // diff 1 → ±38%, diff 5 → ±10%

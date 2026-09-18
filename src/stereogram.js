@@ -206,8 +206,7 @@ export class Stereogram {
 
     const textured = (CONFIG.NOISE_TEXTURE || 'none') !== 'none';
     const moving =
-      textured &&
-      (CONFIG.TEXTURE_DRIFT_X || CONFIG.TEXTURE_DRIFT_Y || CONFIG.TEXTURE_PULSE_HZ);
+      textured && (CONFIG.TEXTURE_DRIFT_X || CONFIG.TEXTURE_DRIFT_Y || CONFIG.TEXTURE_PULSE_HZ);
     if (moving) {
       this.texTime = nowMs / 1000;
       rebuild = true;

@@ -144,9 +144,27 @@ export class MemoryMode extends Mode {
     // Grid lines.
     for (let i = 1; i < N; i++) {
       const x = originX + i * cellSize;
-      fillRect(buf, w, h, x - LINE_THICKNESS / 2, originY, x + LINE_THICKNESS / 2, originY + boardSize, D.GRID);
+      fillRect(
+        buf,
+        w,
+        h,
+        x - LINE_THICKNESS / 2,
+        originY,
+        x + LINE_THICKNESS / 2,
+        originY + boardSize,
+        D.GRID
+      );
       const y = originY + i * cellSize;
-      fillRect(buf, w, h, originX, y - LINE_THICKNESS / 2, originX + boardSize, y + LINE_THICKNESS / 2, D.GRID);
+      fillRect(
+        buf,
+        w,
+        h,
+        originX,
+        y - LINE_THICKNESS / 2,
+        originX + boardSize,
+        y + LINE_THICKNESS / 2,
+        D.GRID
+      );
     }
 
     // Hover hint while a question is open.

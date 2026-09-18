@@ -9,13 +9,13 @@ import { PongMode } from './pong.js';
 import { WordSearchMode } from './wordsearch.js';
 
 export const MODES = [
-   TicTacToeMode,
-   AutoTicTacToeMode,
-   MemoryMode,
-   OutlierMode,
-   MazeMode,
-   PongMode,
-   WordSearchMode,
+  TicTacToeMode,
+  AutoTicTacToeMode,
+  MemoryMode,
+  OutlierMode,
+  MazeMode,
+  PongMode,
+  WordSearchMode,
 ];
 
 export function createMode(id) {

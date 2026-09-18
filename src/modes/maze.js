@@ -156,26 +156,68 @@ export class MazeMode extends Mode {
       const c = i % n;
       const x = ox + c * cell;
       const y = oy + r * cell;
-      if (!(this.open[i] & 1)) fillRect(buf, w, h, x - t / 2, y - t / 2, x + cell + t / 2, y + t / 2, D.GRID);
-      if (!(this.open[i] & 8)) fillRect(buf, w, h, x - t / 2, y - t / 2, x + t / 2, y + cell + t / 2, D.GRID);
+      if (!(this.open[i] & 1))
+        fillRect(buf, w, h, x - t / 2, y - t / 2, x + cell + t / 2, y + t / 2, D.GRID);
+      if (!(this.open[i] & 8))
+        fillRect(buf, w, h, x - t / 2, y - t / 2, x + t / 2, y + cell + t / 2, D.GRID);
     }
-    fillRect(buf, w, h, ox - t / 2, oy + size - t / 2, ox + size + t / 2, oy + size + t / 2, D.GRID);
-    fillRect(buf, w, h, ox + size - t / 2, oy - t / 2, ox + size + t / 2, oy + size + t / 2, D.GRID);
+    fillRect(
+      buf,
+      w,
+      h,
+      ox - t / 2,
+      oy + size - t / 2,
+      ox + size + t / 2,
+      oy + size + t / 2,
+      D.GRID
+    );
+    fillRect(
+      buf,
+      w,
+      h,
+      ox + size - t / 2,
+      oy - t / 2,
+      ox + size + t / 2,
+      oy + size + t / 2,
+      D.GRID
+    );
 
-    const center = (i) => [ox + (i % n) * cell + cell / 2, oy + Math.floor(i / n) * cell + cell / 2];
+    const center = (i) => [
+      ox + (i % n) * cell + cell / 2,
+      oy + Math.floor(i / n) * cell + cell / 2,
+    ];
 
     // Hazards.
     const hz = cell * 0.22;
     for (let i = 0; i < n * n; i++) {
       if (!this.hazards[i]) continue;
       const [cx, cy] = center(i);
-      drawShape(buf, w, h, 'cross', cx, cy, hz, Math.max(1, Math.min(MARK_THICKNESS * 0.6, cell * 0.1)), D.MARK);
+      drawShape(
+        buf,
+        w,
+        h,
+        'cross',
+        cx,
+        cy,
+        hz,
+        Math.max(1, Math.min(MARK_THICKNESS * 0.6, cell * 0.1)),
+        D.MARK
+      );
     }
 
     // Exit ring.
     {
       const [cx, cy] = center(this.exit);
-      drawRing(buf, w, h, cx, cy, cell * 0.3, Math.max(1, Math.min(MARK_THICKNESS, cell * 0.12)), D.MARK);
+      drawRing(
+        buf,
+        w,
+        h,
+        cx,
+        cy,
+        cell * 0.3,
+        Math.max(1, Math.min(MARK_THICKNESS, cell * 0.12)),
+        D.MARK
+      );
     }
 
     // Player.

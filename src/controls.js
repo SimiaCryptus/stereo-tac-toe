@@ -92,9 +92,7 @@ const GAME_SETTINGS = {
   outlier: [{ key: 'OUTLIER_DIFFICULTY', label: 'Difficulty', min: 1, max: 5, step: 1 }],
   maze: [{ key: 'MAZE_SIZE', label: 'Maze size (New Game)', min: 4, max: 25, step: 1 }],
   pong: [{ key: 'PONG_SPEED', label: 'Ball speed', min: 60, max: 600, step: 10 }],
-  wordsearch: [
-    { key: 'WORDSEARCH_SIZE', label: 'Grid size (New Game)', min: 5, max: 10, step: 1 },
-  ],
+  wordsearch: [{ key: 'WORDSEARCH_SIZE', label: 'Grid size (New Game)', min: 5, max: 10, step: 1 }],
 };
 
 export class Controls {

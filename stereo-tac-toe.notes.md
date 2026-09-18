@@ -4,8 +4,8 @@
 
 - **Fixed: corrupted region in the fused image.** The depth map was never at
   fault (press `D` — it is clean). The stereogram colour pass walked left → right
-  and had linked pixels *copy their anchor's colour out of the output buffer*.
-  In the left half every anchor lies to the *right* of the pixels that
+  and had linked pixels _copy their anchor's colour out of the output buffer_.
+  In the left half every anchor lies to the _right_ of the pixels that
   reference it, so those pixels read whatever the buffer held from the previous
   render — black on the very first frame, stale colours after any change near
   the centre column (cursor / marks in the middle column, the memory prompt,

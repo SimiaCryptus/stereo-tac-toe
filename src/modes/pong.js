@@ -113,10 +113,20 @@ export class PongMode extends Mode {
     // Paddles (swept test on the inner faces so fast balls can't tunnel).
     const lx = margin + pw;
     const rx = W - margin - pw;
-    if (this.vx < 0 && prevX - r > lx && this.bx - r <= lx && Math.abs(this.by - this.ay) <= ph / 2 + r) {
+    if (
+      this.vx < 0 &&
+      prevX - r > lx &&
+      this.bx - r <= lx &&
+      Math.abs(this.by - this.ay) <= ph / 2 + r
+    ) {
       this.bx = lx + r;
       this._bounce(this.ay, ph, 1);
-    } else if (this.vx > 0 && prevX + r < rx && this.bx + r >= rx && Math.abs(this.by - this.py) <= ph / 2 + r) {
+    } else if (
+      this.vx > 0 &&
+      prevX + r < rx &&
+      this.bx + r >= rx &&
+      Math.abs(this.by - this.py) <= ph / 2 + r
+    ) {
       this.bx = rx - r;
       this._bounce(this.py, ph, -1);
     }
