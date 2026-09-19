@@ -5,7 +5,7 @@
     "href": "index.html",
     "readme": "README.md",
     "video": "/videos/demo_stereo_arcade.mp4",
-    "order": 11,
+    "order": 12,
     "section": "games",
     "icon": "ST",
     "launchLabel": "Open Stereo Arcade",
