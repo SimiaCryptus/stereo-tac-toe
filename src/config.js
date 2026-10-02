@@ -43,16 +43,17 @@ export const DEFAULTS = Object.freeze({
   // Board layout metrics (in pixels, within the canvas).
   GRID_MARGIN: 80, // margin around the 3x3 board
   CELL_GAP: 8, // gap between cells (drawn as grid lines)
-  LINE_THICKNESS: 6, // grid line thickness in px
-  MARK_THICKNESS: 10, // stroke thickness for X / O
-  MARK_INSET: 22, // inset of a mark from its cell edge
+   LINE_THICKNESS: 12, // grid line thickness in px
+   MARK_THICKNESS: 18, // stroke thickness for X / O
+   MARK_INSET: 28, // inset of a mark from its cell edge
   // Game-mode tuning.
   MEMORY_REVEAL_SEC: 5, // how long memory shapes stay visible
   OUTLIER_DIFFICULTY: 2, // 1 (obvious) .. 5 (subtle)
-  MAZE_SIZE: 9, // maze cells per side (applied on New Game)
+   MAZE_SIZE: 6, // maze cells per side (applied on New Game)
   PONG_SPEED: 220, // initial ball speed, px/s
-  WORDSEARCH_SIZE: 6, // word-search letters per side (applied on New Game)
+   WORDSEARCH_SIZE: 5, // word-search letters per side (applied on New Game)
   AUTO_MOVE_SEC: 1.2, // seconds between moves in 0-player tic-tac-toe
+   SOLO_AI_SIDE: 'O', // side the computer plays in 1-player tic-tac-toe
 });
 
 // Live, mutable config. Start as a shallow copy of DEFAULTS.

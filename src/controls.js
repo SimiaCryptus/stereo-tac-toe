@@ -87,6 +87,17 @@ const APPEARANCE = [
 // Per-mode game settings, keyed by mode id.
 const GAME_SETTINGS = {
   tictactoe: [],
+   tictactoe1: [
+     {
+       key: 'SOLO_AI_SIDE',
+       label: 'Computer plays (New Game)',
+       type: 'select',
+       options: [
+         ['O', 'O (you go first)'],
+         ['X', 'X (computer first)'],
+       ],
+     },
+   ],
   tictactoe0: [{ key: 'AUTO_MOVE_SEC', label: 'Move delay (s)', min: 0.2, max: 5, step: 0.1 }],
   memory: [{ key: 'MEMORY_REVEAL_SEC', label: 'Reveal time (s)', min: 1, max: 20, step: 0.5 }],
   outlier: [{ key: 'OUTLIER_DIFFICULTY', label: 'Difficulty', min: 1, max: 5, step: 1 }],

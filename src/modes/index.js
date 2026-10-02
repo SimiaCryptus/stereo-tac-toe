@@ -1,6 +1,7 @@
 // Registry of playable modes.
 
 import { TicTacToeMode } from './tictactoe.js';
+import { SoloTicTacToeMode } from './solotictactoe.js';
 import { AutoTicTacToeMode } from './autotictactoe.js';
 import { MemoryMode } from './memory.js';
 import { OutlierMode } from './outlier.js';
@@ -10,6 +11,7 @@ import { WordSearchMode } from './wordsearch.js';
 
 export const MODES = [
   TicTacToeMode,
+   SoloTicTacToeMode,
   AutoTicTacToeMode,
   MemoryMode,
   OutlierMode,
